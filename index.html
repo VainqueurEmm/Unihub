@@ -10,37 +10,175 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0a0a0f; color: #e2e8f0; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 2px; }
-    input, textarea, select, button { font-family: 'DM Sans', sans-serif; }
+    body { background: #f0f2f5; color: #333; font-family: 'Roboto', sans-serif; min-height: 100vh; }
+    input, textarea, select, button { font-family: 'Roboto', sans-serif; }
     button { cursor: pointer; }
-    .nexus-title { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -1px; }
-    .fade-in { animation: fadeIn 0.4s ease forwards; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .slide-up { animation: slideUp 0.3s ease forwards; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: #f0f2f5; }
+    ::-webkit-scrollbar-thumb { background: #1a6b3c; border-radius: 3px; }
+
+    /* Layout */
+    .app-layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 240px; background: #1a6b3c; min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 100; display: flex; flex-direction: column; transition: transform 0.3s; }
+    .sidebar-logo { background: #155a32; padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-logo-icon { width: 40px; height: 40px; background: #e8820c; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; color: white; flex-shrink: 0; }
+    .sidebar-logo-text { color: white; font-weight: 700; font-size: 15px; line-height: 1.2; }
+    .sidebar-logo-sub { color: rgba(255,255,255,0.65); font-size: 10px; font-weight: 400; }
+    .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-section-label { color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 12px 20px 6px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: rgba(255,255,255,0.8); font-size: 13.5px; font-weight: 400; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; text-decoration: none; }
+    .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+    .nav-item.active { background: rgba(255,255,255,0.12); color: white; border-left-color: #e8820c; font-weight: 500; }
+    .nav-item-icon { font-size: 16px; width: 20px; text-align: center; }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-user { display: flex; align-items: center; gap: 10px; }
+    .sidebar-avatar { width: 34px; height: 34px; background: #e8820c; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+    .sidebar-user-info { flex: 1; min-width: 0; }
+    .sidebar-user-name { color: white; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-user-role { color: rgba(255,255,255,0.5); font-size: 10px; }
+    .signout-btn { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 18px; padding: 4px; transition: color 0.2s; }
+    .signout-btn:hover { color: #f87171; }
+
+    /* Topbar */
+    .topbar { background: #e8820c; height: 52px; position: fixed; top: 0; left: 240px; right: 0; z-index: 90; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; box-shadow: 0 2px 8px rgba(232,130,12,0.3); }
+    .topbar-title { color: white; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+    .topbar-breadcrumb { color: rgba(255,255,255,0.7); font-size: 12px; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .topbar-user { color: white; font-weight: 500; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .topbar-avatar { width: 30px; height: 30px; background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 12px; }
+
+    /* Main content */
+    .main-content { margin-left: 240px; margin-top: 52px; padding: 24px; min-height: calc(100vh - 52px); }
+
+    /* Page header */
+    .page-header { background: white; padding: 14px 20px; margin-bottom: 20px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; }
+    .page-header-title { font-size: 14px; font-weight: 700; color: #1a6b3c; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+    .page-header-breadcrumb { font-size: 12px; color: #888; }
+    .breadcrumb-active { color: #e8820c; font-weight: 500; }
+
+    /* Cards */
+    .card { background: white; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+    .card-header { padding: 12px 16px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+    .card-header-title { font-size: 13px; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.5px; }
+    .card-body { padding: 16px; }
+
+    /* Dashboard quick-link cards */
+    .quick-card { background: white; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 20px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s; border-top: 3px solid #e8820c; text-align: center; min-height: 120px; }
+    .quick-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-2px); }
+    .quick-card-icon { font-size: 32px; }
+    .quick-card-label { font-size: 12px; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Announcement items */
+    .announcement-item { padding: 14px 16px; border-bottom: 1px solid #f0f2f5; display: flex; gap: 12px; transition: background 0.15s; }
+    .announcement-item:last-child { border-bottom: none; }
+    .announcement-item:hover { background: #fafafa; }
+    .ann-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; flex-shrink: 0; }
+    .ann-dot { width: 8px; height: 8px; border-radius: 50%; background: #1a6b3c; flex-shrink: 0; margin-top: 5px; }
+
+    /* Timetable */
+    .tt-grid { display: grid; gap: 2px; }
+    .tt-header { background: #1a6b3c; color: white; text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 700; border-radius: 3px; }
+    .tt-time { color: #888; font-size: 10px; text-align: right; padding: 4px 6px 0 0; line-height: 1; }
+    .tt-cell { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 3px; min-height: 48px; overflow: hidden; }
+    .tt-block { padding: 3px 5px; font-size: 10px; line-height: 1.3; height: 100%; }
+    .tt-block-code { font-weight: 700; font-size: 10px; }
+    .tt-block-venue { font-size: 9px; color: rgba(255,255,255,0.75); }
+
+    /* Buttons */
+    .btn-green { background: #1a6b3c; color: white; border: none; padding: 8px 18px; border-radius: 4px; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .btn-green:hover { background: #155a32; }
+    .btn-orange { background: #e8820c; color: white; border: none; padding: 8px 18px; border-radius: 4px; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .btn-orange:hover { background: #d4730a; }
+    .btn-outline { background: transparent; border: 1px solid #1a6b3c; color: #1a6b3c; padding: 7px 16px; border-radius: 4px; font-size: 13px; transition: all 0.2s; }
+    .btn-outline:hover { background: #1a6b3c; color: white; }
+    .btn-danger { background: transparent; border: 1px solid #dc2626; color: #dc2626; padding: 4px 10px; border-radius: 4px; font-size: 11px; transition: all 0.2s; }
+    .btn-danger:hover { background: #dc2626; color: white; }
+
+    /* Form elements */
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; font-weight: 500; color: #555; margin-bottom: 5px; }
+    .form-control { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; color: #333; outline: none; transition: border 0.2s; background: white; }
+    .form-control:focus { border-color: #1a6b3c; }
+    .form-control::placeholder { color: #aaa; }
+
+    /* Tags */
+    .tag-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tag-filter-btn { padding: 4px 12px; border-radius: 3px; font-size: 11px; font-weight: 600; border: 1px solid #ddd; background: white; color: #666; cursor: pointer; transition: all 0.2s; }
+    .tag-filter-btn.active { border-color: #1a6b3c; background: #1a6b3c; color: white; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-box { background: white; border-radius: 6px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .modal-header { background: #1a6b3c; color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .modal-body { padding: 20px; }
+    .modal-footer { padding: 14px 20px; border-top: 1px solid #f0f2f5; display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-close { background: none; border: none; color: rgba(255,255,255,0.8); font-size: 20px; line-height: 1; padding: 0; }
+    .modal-close:hover { color: white; }
+
+    /* Auth */
+    .auth-page { min-height: 100vh; background: #f0f2f5; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-card { background: white; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); width: 100%; max-width: 420px; overflow: hidden; }
+    .auth-header { background: #1a6b3c; padding: 28px 24px; text-align: center; }
+    .auth-logo { width: 56px; height: 56px; background: #e8820c; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 26px; font-weight: 700; color: white; }
+    .auth-title { color: white; font-size: 22px; font-weight: 700; }
+    .auth-sub { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px; }
+    .auth-body { padding: 24px; }
+    .tab-toggle { display: flex; background: #f0f2f5; border-radius: 4px; padding: 3px; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 7px 0; border: none; border-radius: 3px; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .tab-btn.active { background: #1a6b3c; color: white; }
+    .tab-btn:not(.active) { background: transparent; color: #666; }
+    .method-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+    .method-btn { flex: 1; padding: 7px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; background: white; color: #666; transition: all 0.2s; }
+    .method-btn.active { border-color: #1a6b3c; color: #1a6b3c; font-weight: 600; }
+    .divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+    .divider-line { flex: 1; height: 1px; background: #eee; }
+    .divider-text { color: #aaa; font-size: 12px; }
+    .google-btn { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: white; color: #333; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; }
+    .google-btn:hover { border-color: #1a6b3c; background: #f9fff9; }
+
+    /* Notice banner */
+    .notice-banner { background: linear-gradient(135deg, #1a4a2e 0%, #1a6b3c 100%); color: white; border-radius: 6px; padding: 20px 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
+    .notice-banner::after { content: ''; position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+    .notice-banner-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .notice-banner-sub { font-size: 12px; color: rgba(255,255,255,0.75); }
+    .notice-badge { display: inline-block; background: #e8820c; color: white; padding: 2px 10px; border-radius: 3px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-card { background: white; border-radius: 6px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 14px; border-left: 4px solid #1a6b3c; }
+    .stat-card.orange { border-left-color: #e8820c; }
+    .stat-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: #f0f9f4; flex-shrink: 0; }
+    .stat-card.orange .stat-icon { background: #fff8f0; }
+    .stat-number { font-size: 22px; font-weight: 700; color: #1a6b3c; line-height: 1; }
+    .stat-card.orange .stat-number { color: #e8820c; }
+    .stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+
+    /* Unit cards */
+    .unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .unit-card { background: white; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 14px; border-top: 3px solid #1a6b3c; }
+    .unit-code { font-size: 13px; font-weight: 700; color: #1a6b3c; }
+    .unit-name { font-size: 12px; color: #555; margin-top: 3px; }
+    .unit-lecturer { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+    /* Today view */
+    .today-slot { background: white; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 14px 16px; border-left: 4px solid #1a6b3c; display: flex; justify-content: space-between; align-items: center; }
+    .today-slot.ongoing { border-left-color: #e8820c; background: #fff8f0; }
+    .today-slot.past { opacity: 0.5; }
+    .ongoing-badge { background: #e8820c; color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 3px; display: inline-block; margin-bottom: 4px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-240px); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .topbar { left: 0; }
+    }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .nav-btn { background: none; border: none; padding: 10px 16px; border-radius: 10px; color: #64748b; font-size: 13px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
-    .nav-btn:hover, .nav-btn.active { background: #1a1a26; color: #6ee7b7; }
-    .btn-primary { background: #6ee7b7; color: #0a0a0f; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 14px; transition: all 0.2s; }
-    .btn-primary:hover { background: #34d399; transform: translateY(-1px); }
-    .btn-ghost { background: transparent; border: 1px solid #2a2a3a; color: #e2e8f0; padding: 9px 18px; border-radius: 10px; font-size: 14px; transition: all 0.2s; }
-    .btn-ghost:hover { border-color: #6ee7b7; color: #6ee7b7; }
-    .btn-danger { background: transparent; border: 1px solid #f43f5e; color: #f43f5e; padding: 6px 14px; border-radius: 8px; font-size: 12px; transition: all 0.2s; }
-    .btn-danger:hover { background: #f43f5e; color: white; }
-    .input-field { width: 100%; background: #12121a; border: 1px solid #2a2a3a; color: #e2e8f0; padding: 11px 14px; border-radius: 10px; font-size: 14px; outline: none; transition: border 0.2s; }
-    .input-field:focus { border-color: #6ee7b7; }
-    .input-field::placeholder { color: #64748b; }
-    .card { background: #1a1a26; border: 1px solid #2a2a3a; border-radius: 16px; padding: 20px; }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .modal-box { background: #1a1a26; border: 1px solid #2a2a3a; border-radius: 20px; padding: 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
-    .timetable-cell { border: 1px solid #2a2a3a; padding: 3px; min-height: 52px; border-radius: 6px; background: #12121a; overflow: hidden; }
-    .unit-block { border-radius: 5px; padding: 3px 6px; font-size: 10px; line-height: 1.3; cursor: default; }
-    .tag-pill { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -63,12 +201,14 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
 const HOURS = Array.from({length:13},(_,i)=>i+7);
 const TAGS = ["#General","#CAT","#Assignment","#Exam","#VenueChange","#Urgent"];
-const TAG_COLORS = {"#General":"#4ade80","#CAT":"#f97316","#Assignment":"#60a5fa","#Exam":"#f43f5e","#VenueChange":"#a78bfa","#Urgent":"#fbbf24"};
-const UNIT_COLORS = ["#6ee7b7","#60a5fa","#f97316","#a78bfa","#f43f5e","#fbbf24","#34d399","#38bdf8","#fb7185","#c084fc"];
+const TAG_COLORS = {"#General":"#16a34a","#CAT":"#ea580c","#Assignment":"#2563eb","#Exam":"#dc2626","#VenueChange":"#7c3aed","#Urgent":"#d97706"};
+const UNIT_COLORS = ["#1a6b3c","#e8820c","#2563eb","#7c3aed","#dc2626","#0891b2","#059669","#d97706","#db2777","#65a30d"];
 const getColor = s => UNIT_COLORS[(s||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0)%UNIT_COLORS.length];
-const timeStr = h => `${h%12||12}${h<12?"am":"pm"}`;
+const timeStr = h => `${h%12||12}:00${h<12?"am":"pm"}`;
 const fmtDate = ts => ts?.toDate ? ts.toDate().toLocaleString("en-KE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "";
+const getInitials = name => (name||"S").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
 
+// ── Auth ───────────────────────────────────────────────────────────────────────
 function AuthScreen() {
   const [mode, setMode] = useState("login");
   const [method, setMethod] = useState("email");
@@ -79,21 +219,21 @@ function AuthScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const getEmail = () => method === "regnumber" ? `${regNo.toLowerCase().replace(/\s/g,"")}@tum.ac.ke` : email;
+  const getEmail = () => method==="regnumber" ? `${regNo.toLowerCase().replace(/\s/g,"")}@tum.ac.ke` : email;
 
   const handleAuth = async () => {
     setError(""); setLoading(true);
     try {
       const em = getEmail();
-      if (mode === "register") {
+      if (mode==="register") {
         if (!displayName.trim()) { setError("Enter your full name"); setLoading(false); return; }
         const cred = await auth.createUserWithEmailAndPassword(em, password);
         await cred.user.updateProfile({ displayName });
-        await db.collection("users").doc(cred.user.uid).set({ displayName, email: em, regNo: method==="regnumber"?regNo:"", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        await db.collection("users").doc(cred.user.uid).set({ displayName, email:em, regNo:method==="regnumber"?regNo:"", createdAt:firebase.firestore.FieldValue.serverTimestamp() });
       } else {
         await auth.signInWithEmailAndPassword(em, password);
       }
-    } catch(e) { setError(e.message.replace("Firebase: ","").replace(/\(auth.*\)\.?/,"")); }
+    } catch(e) { setError(e.message.replace("Firebase:","").replace(/\(auth.*\)\.?/,"").trim()); }
     setLoading(false);
   };
 
@@ -103,51 +243,56 @@ function AuthScreen() {
       const cred = await auth.signInWithPopup(googleProvider);
       const ref = db.collection("users").doc(cred.user.uid);
       const snap = await ref.get();
-      if (!snap.exists) await ref.set({ displayName: cred.user.displayName, email: cred.user.email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    } catch(e) { setError(e.message.replace("Firebase: ","")); }
+      if (!snap.exists) await ref.set({ displayName:cred.user.displayName, email:cred.user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp() });
+    } catch(e) { setError(e.message.replace("Firebase:","").trim()); }
     setLoading(false);
   };
 
   return (
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20,background:"radial-gradient(ellipse at 20% 50%, rgba(110,231,183,0.06) 0%, transparent 60%), #0a0a0f"}}>
-      <div className="fade-in" style={{width:"100%",maxWidth:400}}>
-        <div style={{textAlign:"center",marginBottom:40}}>
-          <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:56,height:56,background:"#6ee7b7",borderRadius:16,marginBottom:16}}>
-            <span style={{fontSize:24,fontFamily:"Syne",fontWeight:800,color:"#0a0a0f"}}>N</span>
-          </div>
-          <h1 className="nexus-title" style={{fontSize:32}}>Nexus</h1>
-          <p style={{color:"#64748b",fontSize:14,marginTop:4}}>BSCS Year 2 · TUM</p>
+    <div className="auth-page">
+      <div className="auth-card fade-in">
+        <div className="auth-header">
+          <div className="auth-logo">N</div>
+          <div className="auth-title">NEXUS</div>
+          <div className="auth-sub">BSCS Year 2 · Technical University of Mombasa</div>
         </div>
-        <div className="card" style={{padding:28}}>
-          <div style={{display:"flex",background:"#12121a",borderRadius:10,padding:4,marginBottom:24}}>
+        <div className="auth-body">
+          <div className="tab-toggle">
             {["login","register"].map(m=>(
-              <button key={m} onClick={()=>{setMode(m);setError("");}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",background:mode===m?"#6ee7b7":"transparent",color:mode===m?"#0a0a0f":"#64748b",fontWeight:600,fontSize:13,transition:"all 0.2s"}}>
+              <button key={m} className={`tab-btn ${mode===m?"active":""}`} onClick={()=>{setMode(m);setError("");}}>
                 {m==="login"?"Sign In":"Register"}
               </button>
             ))}
           </div>
-          <div style={{display:"flex",gap:8,marginBottom:20}}>
+          <div className="method-toggle">
             {["email","regnumber"].map(m=>(
-              <button key={m} onClick={()=>{setMethod(m);setError("");}} className="btn-ghost" style={{flex:1,fontSize:12,padding:"7px 0",borderColor:method===m?"#6ee7b7":"#2a2a3a",color:method===m?"#6ee7b7":"#64748b"}}>
+              <button key={m} className={`method-btn ${method===m?"active":""}`} onClick={()=>{setMethod(m);setError("");}}>
                 {m==="email"?"Email":"Reg Number"}
               </button>
             ))}
           </div>
-          {mode==="register" && <div style={{marginBottom:14}}><input className="input-field" placeholder="Full Name" value={displayName} onChange={e=>setDisplayName(e.target.value)} /></div>}
-          {method==="regnumber"
-            ? <div style={{marginBottom:14}}><input className="input-field" placeholder="Reg Number (e.g. CT101/00123/22)" value={regNo} onChange={e=>setRegNo(e.target.value)} /></div>
-            : <div style={{marginBottom:14}}><input className="input-field" type="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)} /></div>}
-          <div style={{marginBottom:20}}>
-            <input className="input-field" type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAuth()} />
+          {mode==="register" && (
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <input className="form-control" placeholder="e.g. John Kamau" value={displayName} onChange={e=>setDisplayName(e.target.value)} />
+            </div>
+          )}
+          <div className="form-group">
+            <label className="form-label">{method==="regnumber"?"Registration Number":"Email Address"}</label>
+            {method==="regnumber"
+              ? <input className="form-control" placeholder="e.g. CT101/00123/22" value={regNo} onChange={e=>setRegNo(e.target.value)} />
+              : <input className="form-control" type="email" placeholder="your@email.com" value={email} onChange={e=>setEmail(e.target.value)} />}
           </div>
-          {error && <p style={{color:"#f43f5e",fontSize:13,marginBottom:14,background:"rgba(244,63,94,0.1)",padding:"8px 12px",borderRadius:8}}>{error}</p>}
-          <button className="btn-primary" style={{width:"100%",padding:"12px 0",marginBottom:12}} onClick={handleAuth} disabled={loading}>
-            {loading?"Please wait...":mode==="login"?"Sign In":"Create Account"}
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input className="form-control" type="password" placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAuth()} />
+          </div>
+          {error && <div style={{background:"#fef2f2",border:"1px solid #fecaca",color:"#dc2626",padding:"8px 12px",borderRadius:4,fontSize:12,marginBottom:14}}>{error}</div>}
+          <button className="btn-green" style={{width:"100%",padding:"11px 0",fontSize:14,marginBottom:10}} onClick={handleAuth} disabled={loading}>
+            {loading?"Please wait...":mode==="login"?"SIGN IN":"CREATE ACCOUNT"}
           </button>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-            <div style={{flex:1,height:1,background:"#2a2a3a"}} /><span style={{color:"#64748b",fontSize:12}}>or</span><div style={{flex:1,height:1,background:"#2a2a3a"}} />
-          </div>
-          <button onClick={handleGoogle} disabled={loading} style={{width:"100%",padding:"11px 0",borderRadius:10,border:"1px solid #2a2a3a",background:"transparent",color:"#e2e8f0",fontSize:14,fontWeight:500,display:"flex",alignItems:"center",justifyContent:"center",gap:10,transition:"all 0.2s"}}>
+          <div className="divider"><div className="divider-line"/><span className="divider-text">OR</span><div className="divider-line"/></div>
+          <button className="google-btn" onClick={handleGoogle} disabled={loading}>
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.9 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-21 0-1.4-.1-2.7-.5-4z"/></svg>
             Continue with Google
           </button>
@@ -157,8 +302,112 @@ function AuthScreen() {
   );
 }
 
-function Announcements({ user }) {
-  const [posts, setPosts] = useState([]);
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+function Dashboard({ user, setPage, announcements, units, slots }) {
+  const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()];
+  const todaySlots = slots.filter(s=>s.day===todayName).sort((a,b)=>a.start-b.start);
+  const nowHour = new Date().getHours()+new Date().getMinutes()/60;
+  const currentSlot = todaySlots.find(s=>s.start<=nowHour&&s.end>nowHour);
+  const nextSlot = todaySlots.find(s=>s.start>nowHour);
+  const getUnit = id => units.find(u=>u.id===id);
+
+  return (
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-header-title">📊 Dashboard | Quick Links</div>
+        <div className="page-header-breadcrumb">STUDENT › <span className="breadcrumb-active">DASHBOARD</span></div>
+      </div>
+
+      {/* Notice banner */}
+      <div className="notice-banner" style={{marginBottom:20}}>
+        <div className="notice-badge">📢 NEXUS</div>
+        <div className="notice-banner-title">Welcome to Nexus — BSCS Year 2</div>
+        <div className="notice-banner-sub">Your class communication & timetable platform · Technical University of Mombasa</div>
+      </div>
+
+      {/* Stats */}
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-icon">📢</div>
+          <div><div className="stat-number">{announcements.length}</div><div className="stat-label">Announcements</div></div>
+        </div>
+        <div className="stat-card orange">
+          <div className="stat-icon">📚</div>
+          <div><div className="stat-number">{units.length}</div><div className="stat-label">Registered Units</div></div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">📅</div>
+          <div><div className="stat-number">{todaySlots.length}</div><div className="stat-label">Classes Today</div></div>
+        </div>
+        <div className="stat-card orange">
+          <div className="stat-icon">⏰</div>
+          <div><div className="stat-number">{currentSlot ? "Now" : nextSlot ? timeStr(nextSlot.start) : "Free"}</div><div className="stat-label">{currentSlot ? "Ongoing Class" : nextSlot ? "Next Class" : "No More Classes"}</div></div>
+        </div>
+      </div>
+
+      {/* Quick links grid */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:14,marginBottom:20}}>
+        {[
+          {icon:"📢",label:"Announcements",page:"announcements"},
+          {icon:"📅",label:"Timetable",page:"timetable"},
+          {icon:"📚",label:"My Units",page:"units"},
+          {icon:"📆",label:"Today's Classes",page:"today"},
+        ].map(q=>(
+          <div key={q.page} className="quick-card" onClick={()=>setPage(q.page)}>
+            <div className="quick-card-icon">{q.icon}</div>
+            <div className="quick-card-label">{q.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Today + Recent announcements */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+        <div className="card">
+          <div className="card-header">
+            <div className="card-header-title">Today — {todayName}</div>
+          </div>
+          <div>
+            {todaySlots.length===0 && <div style={{padding:"20px 16px",color:"#aaa",fontSize:13,textAlign:"center"}}>No classes today 🎉</div>}
+            {todaySlots.map(s=>{
+              const u=getUnit(s.unitId);
+              const isCurrent=s.start<=nowHour&&s.end>nowHour;
+              const isPast=s.end<=nowHour;
+              return (
+                <div key={s.id} style={{padding:"10px 16px",borderBottom:"1px solid #f0f2f5",opacity:isPast?0.5:1,borderLeft:isCurrent?"3px solid #e8820c":"3px solid transparent",background:isCurrent?"#fff8f0":"white"}}>
+                  {isCurrent&&<div className="ongoing-badge">ONGOING</div>}
+                  <div style={{fontWeight:600,fontSize:13}}>{u?.code} — {u?.name}</div>
+                  <div style={{fontSize:11,color:"#888",marginTop:2}}>{timeStr(s.start)} – {timeStr(s.end)} · {s.venue||"TBA"}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-header">
+            <div className="card-header-title">Recent Announcements</div>
+            <button className="btn-orange" style={{fontSize:11,padding:"4px 12px"}} onClick={()=>setPage("announcements")}>View All</button>
+          </div>
+          <div>
+            {announcements.slice(0,4).map(p=>(
+              <div key={p.id} className="announcement-item">
+                <div className="ann-dot" style={{background:TAG_COLORS[p.tag]||"#1a6b3c"}} />
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.title}</div>
+                  <div style={{fontSize:11,color:"#888",marginTop:1}}>{p.author} · {fmtDate(p.createdAt)}</div>
+                </div>
+                <span className="ann-tag" style={{background:(TAG_COLORS[p.tag]||"#1a6b3c")+"18",color:TAG_COLORS[p.tag]||"#1a6b3c"}}>{p.tag}</span>
+              </div>
+            ))}
+            {announcements.length===0&&<div style={{padding:"20px 16px",color:"#aaa",fontSize:13,textAlign:"center"}}>No announcements yet</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Announcements ──────────────────────────────────────────────────────────────
+function Announcements({ user, posts, setPosts }) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -167,82 +416,74 @@ function Announcements({ user }) {
   const [filter, setFilter] = useState("All");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    return db.collection("announcements").orderBy("createdAt","desc").onSnapshot(snap =>
-      setPosts(snap.docs.map(d=>({id:d.id,...d.data()})))
-    );
-  }, []);
-
   const submit = async () => {
     if (!title.trim()||!body.trim()) return;
     setLoading(true);
-    await db.collection("announcements").add({ title, body, tag, pinned, author: user.displayName||user.email, uid: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    await db.collection("announcements").add({ title, body, tag, pinned, author:user.displayName||user.email, uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp() });
     setTitle(""); setBody(""); setTag("#General"); setPinned(false); setShowForm(false); setLoading(false);
   };
-
-  const del = async (id, uid) => { if(uid!==user.uid) return; await db.collection("announcements").doc(id).delete(); };
-
+  const del = async (id,uid) => { if(uid!==user.uid) return; await db.collection("announcements").doc(id).delete(); };
   const filtered = filter==="All" ? posts : posts.filter(p=>p.tag===filter);
   const ordered = [...filtered.filter(p=>p.pinned),...filtered.filter(p=>!p.pinned)];
 
   return (
     <div className="fade-in">
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
-        <div>
-          <h2 className="nexus-title" style={{fontSize:22}}>Announcements</h2>
-          <p style={{color:"#64748b",fontSize:13}}>{posts.length} posts · live</p>
-        </div>
-        <button className="btn-primary" onClick={()=>setShowForm(true)}>+ Post</button>
+      <div className="page-header">
+        <div className="page-header-title">📢 Announcements</div>
+        <button className="btn-orange" onClick={()=>setShowForm(true)}>+ New Post</button>
       </div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>
-        {["All",...TAGS].map(t=>(
-          <button key={t} onClick={()=>setFilter(t)} style={{padding:"5px 14px",borderRadius:999,border:`1px solid ${filter===t?TAG_COLORS[t]||"#6ee7b7":"#2a2a3a"}`,background:filter===t?(TAG_COLORS[t]||"#6ee7b7")+"20":"transparent",color:filter===t?(TAG_COLORS[t]||"#6ee7b7"):"#64748b",fontSize:12,fontWeight:600,cursor:"pointer",transition:"all 0.2s"}}>
-            {t}
-          </button>
-        ))}
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:12}}>
-        {ordered.length===0 && <div style={{textAlign:"center",padding:60,color:"#64748b"}}>No announcements yet. Be the first to post!</div>}
-        {ordered.map((p,i)=>(
-          <div key={p.id} className="card slide-up" style={{borderLeft:`3px solid ${TAG_COLORS[p.tag]||"#6ee7b7"}`,animationDelay:`${i*0.05}s`}}>
-            <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-                  {p.pinned && <span style={{fontSize:10,background:"rgba(251,191,36,0.2)",color:"#fbbf24",padding:"2px 8px",borderRadius:999,fontWeight:700}}>📌 PINNED</span>}
-                  <span className="tag-pill" style={{background:(TAG_COLORS[p.tag]||"#6ee7b7")+"20",color:TAG_COLORS[p.tag]||"#6ee7b7"}}>{p.tag}</span>
-                </div>
-                <h3 style={{fontSize:15,fontWeight:600,marginBottom:6}}>{p.title}</h3>
-                <p style={{color:"#64748b",fontSize:13,lineHeight:1.6}}>{p.body}</p>
-                <p style={{color:"#64748b",fontSize:11,marginTop:10}}>By {p.author} · {fmtDate(p.createdAt)}</p>
-              </div>
-              {p.uid===user.uid && <button className="btn-danger" onClick={()=>del(p.id,p.uid)}>Delete</button>}
-            </div>
+      <div className="card">
+        <div className="card-header">
+          <div className="tag-filters" style={{margin:0}}>
+            {["All",...TAGS].map(t=>(
+              <button key={t} className={`tag-filter-btn ${filter===t?"active":""}`} onClick={()=>setFilter(t)} style={filter===t?{}:{borderColor:TAG_COLORS[t]||"#ddd",color:TAG_COLORS[t]||"#666"}}>{t}</button>
+            ))}
           </div>
-        ))}
+          <div style={{fontSize:12,color:"#888"}}>{ordered.length} posts</div>
+        </div>
+        <div>
+          {ordered.length===0&&<div style={{padding:"40px 16px",color:"#aaa",fontSize:13,textAlign:"center"}}>No announcements yet. Click "+ New Post" to add one.</div>}
+          {ordered.map(p=>(
+            <div key={p.id} className="announcement-item" style={{alignItems:"flex-start"}}>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5,flexWrap:"wrap"}}>
+                  {p.pinned&&<span style={{background:"#fef3c7",color:"#d97706",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:3}}>📌 PINNED</span>}
+                  <span className="ann-tag" style={{background:(TAG_COLORS[p.tag]||"#1a6b3c")+"18",color:TAG_COLORS[p.tag]||"#1a6b3c"}}>{p.tag}</span>
+                </div>
+                <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>{p.title}</div>
+                <div style={{fontSize:13,color:"#555",lineHeight:1.6}}>{p.body}</div>
+                <div style={{fontSize:11,color:"#aaa",marginTop:8}}>Posted by {p.author} · {fmtDate(p.createdAt)}</div>
+              </div>
+              {p.uid===user.uid&&<button className="btn-danger" onClick={()=>del(p.id,p.uid)}>Delete</button>}
+            </div>
+          ))}
+        </div>
       </div>
-      {showForm && (
+
+      {showForm&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowForm(false)}>
-          <div className="modal-box slide-up">
-            <h3 className="nexus-title" style={{fontSize:20,marginBottom:20}}>New Announcement</h3>
-            <div style={{display:"flex",flexDirection:"column",gap:14}}>
-              <input className="input-field" placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)} />
-              <textarea className="input-field" placeholder="Write your announcement..." rows={4} value={body} onChange={e=>setBody(e.target.value)} style={{resize:"vertical"}} />
-              <div>
-                <p style={{fontSize:12,color:"#64748b",marginBottom:8}}>Tag</p>
-                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  {TAGS.map(t=>(
-                    <button key={t} onClick={()=>setTag(t)} style={{padding:"4px 12px",borderRadius:999,border:`1px solid ${tag===t?TAG_COLORS[t]:"#2a2a3a"}`,background:tag===t?TAG_COLORS[t]+"25":"transparent",color:tag===t?TAG_COLORS[t]:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t}</button>
-                  ))}
+          <div className="modal-box">
+            <div className="modal-header">
+              <div className="modal-header-title">New Announcement</div>
+              <button className="modal-close" onClick={()=>setShowForm(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group"><label className="form-label">Title</label><input className="form-control" placeholder="Announcement title" value={title} onChange={e=>setTitle(e.target.value)} /></div>
+              <div className="form-group"><label className="form-label">Message</label><textarea className="form-control" placeholder="Write your announcement..." rows={4} value={body} onChange={e=>setBody(e.target.value)} style={{resize:"vertical"}} /></div>
+              <div className="form-group">
+                <label className="form-label">Tag</label>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {TAGS.map(t=><button key={t} onClick={()=>setTag(t)} style={{padding:"4px 12px",borderRadius:3,border:`1px solid ${tag===t?TAG_COLORS[t]:"#ddd"}`,background:tag===t?(TAG_COLORS[t]+"18"):"white",color:tag===t?TAG_COLORS[t]:"#666",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t}</button>)}
                 </div>
               </div>
-              <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
-                <input type="checkbox" checked={pinned} onChange={e=>setPinned(e.target.checked)} style={{accentColor:"#6ee7b7",width:16,height:16}} />
-                <span style={{fontSize:13}}>Pin this announcement</span>
+              <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13}}>
+                <input type="checkbox" checked={pinned} onChange={e=>setPinned(e.target.checked)} style={{accentColor:"#1a6b3c",width:15,height:15}} />
+                Pin this announcement
               </label>
-              <div style={{display:"flex",gap:10,marginTop:4}}>
-                <button className="btn-ghost" style={{flex:1}} onClick={()=>setShowForm(false)}>Cancel</button>
-                <button className="btn-primary" style={{flex:2}} onClick={submit} disabled={loading}>{loading?"Posting...":"Post Announcement"}</button>
-              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-outline" onClick={()=>setShowForm(false)}>Cancel</button>
+              <button className="btn-green" onClick={submit} disabled={loading}>{loading?"Posting...":"Post Announcement"}</button>
             </div>
           </div>
         </div>
@@ -251,9 +492,49 @@ function Announcements({ user }) {
   );
 }
 
-function Timetable({ user }) {
-  const [units, setUnits] = useState([]);
-  const [slots, setSlots] = useState([]);
+// ── Timetable ──────────────────────────────────────────────────────────────────
+function TimetableGrid({ units, slots }) {
+  const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()];
+  const getSlotForCell = (day,hour) => slots.filter(s=>s.day===day&&s.start<=hour&&s.end>hour);
+  const getUnit = id => units.find(u=>u.id===id);
+
+  return (
+    <div style={{overflowX:"auto"}}>
+      <div style={{minWidth:680}}>
+        <div style={{display:"grid",gridTemplateColumns:"64px repeat(5,1fr)",gap:2,marginBottom:2}}>
+          <div/>
+          {DAYS.map(d=><div key={d} className="tt-header" style={{background:d===todayName?"#e8820c":"#1a6b3c"}}>{d.slice(0,3).toUpperCase()}</div>)}
+        </div>
+        {HOURS.map(h=>(
+          <div key={h} style={{display:"grid",gridTemplateColumns:"64px repeat(5,1fr)",gap:2,marginBottom:2}}>
+            <div className="tt-time">{timeStr(h)}</div>
+            {DAYS.map(d=>{
+              const cellSlots=getSlotForCell(d,h);
+              return (
+                <div key={d} className="tt-cell">
+                  {cellSlots.map(s=>{
+                    const u=getUnit(s.unitId);
+                    const isFirst=s.start===h;
+                    const col=getColor(s.unitId);
+                    if(!isFirst) return <div key={s.id} style={{height:"100%",background:col+"22"}}/>;
+                    return (
+                      <div key={s.id} className="tt-block" style={{background:col,color:"white",borderRadius:3}}>
+                        <div className="tt-block-code">{u?.code}</div>
+                        {s.venue&&<div className="tt-block-venue">{s.venue}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Timetable({ user, units, setUnits, slots, setSlots }) {
   const [view, setView] = useState("grid");
   const [showUnitForm, setShowUnitForm] = useState(false);
   const [showSlotForm, setShowSlotForm] = useState(false);
@@ -267,198 +548,142 @@ function Timetable({ user }) {
   const [slotVenue, setSlotVenue] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const u1 = db.collection("units").onSnapshot(snap=>setUnits(snap.docs.map(d=>({id:d.id,...d.data()}))));
-    const u2 = db.collection("slots").onSnapshot(snap=>setSlots(snap.docs.map(d=>({id:d.id,...d.data()}))));
-    return ()=>{ u1(); u2(); };
-  }, []);
-
   const addUnit = async () => {
     if (!unitName.trim()||!unitCode.trim()) return;
     setLoading(true);
     await db.collection("units").add({ name:unitName, code:unitCode, lecturer:unitLecturer, addedBy:user.uid });
     setUnitName(""); setUnitCode(""); setUnitLecturer(""); setShowUnitForm(false); setLoading(false);
   };
-
   const delUnit = async id => {
     await db.collection("units").doc(id).delete();
     await Promise.all(slots.filter(s=>s.unitId===id).map(s=>db.collection("slots").doc(s.id).delete()));
   };
-
   const addSlot = async () => {
     if (!slotUnit||slotEnd<=slotStart) return;
     setLoading(true);
     await db.collection("slots").add({ unitId:slotUnit, day:slotDay, start:slotStart, end:slotEnd, venue:slotVenue });
     setSlotUnit(""); setSlotVenue(""); setShowSlotForm(false); setLoading(false);
   };
-
   const delSlot = async id => db.collection("slots").doc(id).delete();
-  const getSlotForCell = (day,hour) => slots.filter(s=>s.day===day&&s.start<=hour&&s.end>hour);
   const getUnit = id => units.find(u=>u.id===id);
-
   const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()];
   const todaySlots = slots.filter(s=>s.day===todayName).sort((a,b)=>a.start-b.start);
   const nowHour = new Date().getHours()+new Date().getMinutes()/60;
-  const currentSlot = todaySlots.find(s=>s.start<=nowHour&&s.end>nowHour);
-  const nextSlot = todaySlots.find(s=>s.start>nowHour);
 
   return (
     <div className="fade-in">
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24,flexWrap:"wrap",gap:12}}>
-        <div>
-          <h2 className="nexus-title" style={{fontSize:22}}>Timetable</h2>
-          <p style={{color:"#64748b",fontSize:13}}>{units.length} units · {slots.length} sessions</p>
-        </div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          <div style={{display:"flex",background:"#12121a",borderRadius:10,padding:3}}>
-            {["grid","today"].map(v=>(
-              <button key={v} onClick={()=>setView(v)} style={{padding:"6px 16px",borderRadius:8,border:"none",background:view===v?"#6ee7b7":"transparent",color:view===v?"#0a0a0f":"#64748b",fontWeight:600,fontSize:12,transition:"all 0.2s"}}>{v==="grid"?"Weekly":"Today"}</button>
+      <div className="page-header">
+        <div className="page-header-title">📅 Timetable</div>
+        <div style={{display:"flex",gap:8}}>
+          <div style={{display:"flex",background:"#f0f2f5",borderRadius:4,padding:2}}>
+            {["grid","today","units"].map(v=>(
+              <button key={v} onClick={()=>setView(v)} style={{padding:"6px 14px",borderRadius:3,border:"none",background:view===v?"#1a6b3c":"transparent",color:view===v?"white":"#666",fontWeight:600,fontSize:12,transition:"all 0.2s"}}>
+                {v==="grid"?"Weekly Grid":v==="today"?"Today":"Units"}
+              </button>
             ))}
           </div>
-          <button className="btn-ghost" style={{fontSize:12}} onClick={()=>setShowUnitForm(true)}>+ Unit</button>
-          <button className="btn-primary" style={{fontSize:12}} onClick={()=>setShowSlotForm(true)}>+ Session</button>
+          <button className="btn-outline" style={{fontSize:12}} onClick={()=>setShowUnitForm(true)}>+ Unit</button>
+          <button className="btn-green" style={{fontSize:12}} onClick={()=>setShowSlotForm(true)}>+ Session</button>
         </div>
       </div>
-
-      {view==="today" && (
-        <div style={{display:"flex",flexDirection:"column",gap:16}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <div className="card" style={{borderColor:currentSlot?"#6ee7b7":"#2a2a3a"}}>
-              <p style={{fontSize:10,color:"#6ee7b7",fontWeight:700,marginBottom:6}}>NOW</p>
-              {currentSlot?(<><p style={{fontWeight:600,fontSize:14}}>{getUnit(currentSlot.unitId)?.code}</p><p style={{color:"#64748b",fontSize:12}}>{currentSlot.venue||"No venue"}</p><p style={{color:"#64748b",fontSize:11,marginTop:4}}>Until {timeStr(currentSlot.end)}</p></>):<p style={{color:"#64748b",fontSize:13}}>Free period</p>}
-            </div>
-            <div className="card">
-              <p style={{fontSize:10,color:"#64748b",fontWeight:700,marginBottom:6}}>NEXT</p>
-              {nextSlot?(<><p style={{fontWeight:600,fontSize:14}}>{getUnit(nextSlot.unitId)?.code}</p><p style={{color:"#64748b",fontSize:12}}>{nextSlot.venue||"No venue"}</p><p style={{color:"#64748b",fontSize:11,marginTop:4}}>{timeStr(nextSlot.start)}</p></>):<p style={{color:"#64748b",fontSize:13}}>Nothing more today</p>}
-            </div>
-          </div>
-          <h3 style={{fontSize:14,color:"#64748b",fontWeight:600}}>{todayName}'s Schedule</h3>
-          {todaySlots.length===0 && <div style={{textAlign:"center",padding:40,color:"#64748b"}}>No classes today 🎉</div>}
-          {todaySlots.map(s=>{
-            const u=getUnit(s.unitId);
-            const isPast=s.end<=nowHour;
-            const isCurrent=s.start<=nowHour&&s.end>nowHour;
-            return (
-              <div key={s.id} className="card" style={{borderLeft:`3px solid ${getColor(s.unitId)}`,opacity:isPast?0.5:1}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                  <div>
-                    {isCurrent&&<span style={{fontSize:10,background:"rgba(110,231,183,0.15)",color:"#6ee7b7",padding:"2px 8px",borderRadius:999,fontWeight:700,display:"inline-block",marginBottom:6}}>● ONGOING</span>}
-                    <p style={{fontWeight:700,fontSize:15}}>{u?.code} <span style={{fontWeight:400,color:"#64748b"}}>— {u?.name}</span></p>
-                    <p style={{color:"#64748b",fontSize:13,marginTop:2}}>{timeStr(s.start)} – {timeStr(s.end)} · {s.venue||"TBA"}</p>
-                    {u?.lecturer&&<p style={{color:"#64748b",fontSize:12,marginTop:2}}>{u.lecturer}</p>}
-                  </div>
-                  <button className="btn-danger" onClick={()=>delSlot(s.id)}>✕</button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {view==="grid" && (
-        <div style={{overflowX:"auto"}}>
-          <div style={{minWidth:680}}>
-            <div style={{display:"grid",gridTemplateColumns:"56px repeat(5,1fr)",gap:3,marginBottom:3}}>
-              <div/>
-              {DAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:11,fontWeight:700,color:d===todayName?"#6ee7b7":"#64748b",padding:"6px 0"}}>{d.slice(0,3)}</div>)}
+        <div className="card"><div className="card-body"><TimetableGrid units={units} slots={slots} /></div></div>
+      )}
+
+      {view==="today" && (
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+            <div className="card" style={{borderTop:`3px solid ${todaySlots.find(s=>s.start<=nowHour&&s.end>nowHour)?"#e8820c":"#1a6b3c"}`}}>
+              <div className="card-body">
+                <div style={{fontSize:10,color:"#e8820c",fontWeight:700,marginBottom:6,textTransform:"uppercase"}}>Now</div>
+                {todaySlots.find(s=>s.start<=nowHour&&s.end>nowHour) ? (()=>{const s=todaySlots.find(s=>s.start<=nowHour&&s.end>nowHour);const u=getUnit(s.unitId);return(<><div style={{fontWeight:700,fontSize:14}}>{u?.code}</div><div style={{fontSize:12,color:"#888"}}>{s.venue||"No venue"}</div><div style={{fontSize:11,color:"#aaa",marginTop:2}}>Until {timeStr(s.end)}</div></>);})() : <div style={{color:"#aaa",fontSize:13}}>Free period</div>}
+              </div>
             </div>
-            {HOURS.map(h=>(
-              <div key={h} style={{display:"grid",gridTemplateColumns:"56px repeat(5,1fr)",gap:3,marginBottom:3}}>
-                <div style={{fontSize:10,color:"#64748b",textAlign:"right",paddingRight:6,paddingTop:4}}>{timeStr(h)}</div>
-                {DAYS.map(d=>{
-                  const cellSlots=getSlotForCell(d,h);
-                  return (
-                    <div key={d} className="timetable-cell">
-                      {cellSlots.map(s=>{
-                        const u=getUnit(s.unitId);
-                        const isFirst=s.start===h;
-                        if(!isFirst) return <div key={s.id} style={{height:"100%",background:getColor(s.unitId)+"18"}}/>;
-                        return (
-                          <div key={s.id} className="unit-block" style={{background:getColor(s.unitId)+"22",borderLeft:`2px solid ${getColor(s.unitId)}`,color:getColor(s.unitId)}}>
-                            <div style={{fontWeight:700}}>{u?.code}</div>
-                            {s.venue&&<div style={{color:"#64748b",fontSize:9}}>{s.venue}</div>}
-                          </div>
-                        );
-                      })}
+            <div className="card">
+              <div className="card-body">
+                <div style={{fontSize:10,color:"#888",fontWeight:700,marginBottom:6,textTransform:"uppercase"}}>Next</div>
+                {todaySlots.find(s=>s.start>nowHour) ? (()=>{const s=todaySlots.find(s=>s.start>nowHour);const u=getUnit(s.unitId);return(<><div style={{fontWeight:700,fontSize:14}}>{u?.code}</div><div style={{fontSize:12,color:"#888"}}>{s.venue||"No venue"}</div><div style={{fontSize:11,color:"#aaa",marginTop:2}}>{timeStr(s.start)}</div></>);})() : <div style={{color:"#aaa",fontSize:13}}>Nothing more today</div>}
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header"><div className="card-header-title">{todayName}'s Schedule</div></div>
+            <div style={{padding:"8px 0"}}>
+              {todaySlots.length===0&&<div style={{padding:"30px 16px",color:"#aaa",fontSize:13,textAlign:"center"}}>No classes today 🎉</div>}
+              {todaySlots.map(s=>{
+                const u=getUnit(s.unitId);
+                const isPast=s.end<=nowHour;
+                const isCurrent=s.start<=nowHour&&s.end>nowHour;
+                return (
+                  <div key={s.id} style={{padding:"10px 16px",borderBottom:"1px solid #f0f2f5",opacity:isPast?0.5:1,borderLeft:isCurrent?"4px solid #e8820c":"4px solid transparent",background:isCurrent?"#fff8f0":"white",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div>
+                      {isCurrent&&<div className="ongoing-badge">● ONGOING</div>}
+                      <div style={{fontWeight:600,fontSize:13}}>{u?.code} <span style={{fontWeight:400,color:"#888"}}>— {u?.name}</span></div>
+                      <div style={{fontSize:11,color:"#aaa",marginTop:2}}>{timeStr(s.start)} – {timeStr(s.end)} · {s.venue||"TBA"}</div>
                     </div>
-                  );
-                })}
+                    <button className="btn-danger" onClick={()=>delSlot(s.id)}>Remove</button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view==="units" && (
+        <div>
+          {units.length===0&&<div style={{padding:"40px",color:"#aaa",fontSize:13,textAlign:"center",background:"white",borderRadius:6}}>No units added yet. Click "+ Unit" to add your first.</div>}
+          <div className="unit-grid">
+            {units.map(u=>(
+              <div key={u.id} className="unit-card" style={{borderTopColor:getColor(u.id)}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                  <div>
+                    <div className="unit-code" style={{color:getColor(u.id)}}>{u.code}</div>
+                    <div className="unit-name">{u.name}</div>
+                    {u.lecturer&&<div className="unit-lecturer">{u.lecturer}</div>}
+                    <div style={{fontSize:10,color:"#aaa",marginTop:4}}>{slots.filter(s=>s.unitId===u.id).length} session(s)</div>
+                  </div>
+                  <button className="btn-danger" style={{fontSize:11,padding:"3px 8px"}} onClick={()=>delUnit(u.id)}>Delete</button>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      <div style={{marginTop:32}}>
-        <h3 className="nexus-title" style={{fontSize:16,marginBottom:14}}>Registered Units</h3>
-        {units.length===0&&<p style={{color:"#64748b",fontSize:13}}>No units added yet. Click "+ Unit" to add your first.</p>}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:10}}>
-          {units.map(u=>(
-            <div key={u.id} className="card" style={{borderLeft:`3px solid ${getColor(u.id)}`,padding:14}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                <div>
-                  <p style={{fontWeight:700,fontSize:13,color:getColor(u.id)}}>{u.code}</p>
-                  <p style={{fontSize:13,marginTop:2}}>{u.name}</p>
-                  {u.lecturer&&<p style={{color:"#64748b",fontSize:11,marginTop:2}}>{u.lecturer}</p>}
-                </div>
-                <button className="btn-danger" style={{padding:"4px 10px",fontSize:11}} onClick={()=>delUnit(u.id)}>Del</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {showUnitForm&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowUnitForm(false)}>
-          <div className="modal-box slide-up">
-            <h3 className="nexus-title" style={{fontSize:20,marginBottom:20}}>Add Unit</h3>
-            <div style={{display:"flex",flexDirection:"column",gap:12}}>
-              <input className="input-field" placeholder="Unit Code (e.g. EEE 4250)" value={unitCode} onChange={e=>setUnitCode(e.target.value)} />
-              <input className="input-field" placeholder="Unit Name (e.g. Digital Electronics)" value={unitName} onChange={e=>setUnitName(e.target.value)} />
-              <input className="input-field" placeholder="Lecturer (optional)" value={unitLecturer} onChange={e=>setUnitLecturer(e.target.value)} />
-              <div style={{display:"flex",gap:10,marginTop:4}}>
-                <button className="btn-ghost" style={{flex:1}} onClick={()=>setShowUnitForm(false)}>Cancel</button>
-                <button className="btn-primary" style={{flex:2}} onClick={addUnit} disabled={loading}>{loading?"Saving...":"Add Unit"}</button>
-              </div>
+          <div className="modal-box">
+            <div className="modal-header"><div className="modal-header-title">Add Unit</div><button className="modal-close" onClick={()=>setShowUnitForm(false)}>✕</button></div>
+            <div className="modal-body">
+              <div className="form-group"><label className="form-label">Unit Code *</label><input className="form-control" placeholder="e.g. CSC 2201" value={unitCode} onChange={e=>setUnitCode(e.target.value)} /></div>
+              <div className="form-group"><label className="form-label">Unit Name *</label><input className="form-control" placeholder="e.g. Data Structures" value={unitName} onChange={e=>setUnitName(e.target.value)} /></div>
+              <div className="form-group"><label className="form-label">Lecturer (optional)</label><input className="form-control" placeholder="e.g. Dr. Mwangi" value={unitLecturer} onChange={e=>setUnitLecturer(e.target.value)} /></div>
             </div>
+            <div className="modal-footer"><button className="btn-outline" onClick={()=>setShowUnitForm(false)}>Cancel</button><button className="btn-green" onClick={addUnit} disabled={loading}>{loading?"Saving...":"Add Unit"}</button></div>
           </div>
         </div>
       )}
 
       {showSlotForm&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowSlotForm(false)}>
-          <div className="modal-box slide-up">
-            <h3 className="nexus-title" style={{fontSize:20,marginBottom:20}}>Add Session</h3>
-            {units.length===0?<p style={{color:"#fbbf24"}}>Please add at least one unit first.</p>:(
-              <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                <select className="input-field" value={slotUnit} onChange={e=>setSlotUnit(e.target.value)}>
-                  <option value="">Select Unit</option>
-                  {units.map(u=><option key={u.id} value={u.id}>{u.code} — {u.name}</option>)}
-                </select>
-                <select className="input-field" value={slotDay} onChange={e=>setSlotDay(e.target.value)}>
-                  {DAYS.map(d=><option key={d} value={d}>{d}</option>)}
-                </select>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                  <div>
-                    <p style={{fontSize:11,color:"#64748b",marginBottom:6}}>Start Time</p>
-                    <select className="input-field" value={slotStart} onChange={e=>setSlotStart(Number(e.target.value))}>
-                      {HOURS.map(h=><option key={h} value={h}>{timeStr(h)}</option>)}
-                    </select>
+          <div className="modal-box">
+            <div className="modal-header"><div className="modal-header-title">Add Session</div><button className="modal-close" onClick={()=>setShowSlotForm(false)}>✕</button></div>
+            <div className="modal-body">
+              {units.length===0?<div style={{color:"#e8820c",fontSize:13}}>Please add at least one unit first.</div>:(
+                <>
+                  <div className="form-group"><label className="form-label">Unit *</label><select className="form-control" value={slotUnit} onChange={e=>setSlotUnit(e.target.value)}><option value="">Select Unit</option>{units.map(u=><option key={u.id} value={u.id}>{u.code} — {u.name}</option>)}</select></div>
+                  <div className="form-group"><label className="form-label">Day *</label><select className="form-control" value={slotDay} onChange={e=>setSlotDay(e.target.value)}>{DAYS.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                    <div className="form-group"><label className="form-label">Start Time</label><select className="form-control" value={slotStart} onChange={e=>setSlotStart(Number(e.target.value))}>{HOURS.map(h=><option key={h} value={h}>{timeStr(h)}</option>)}</select></div>
+                    <div className="form-group"><label className="form-label">End Time</label><select className="form-control" value={slotEnd} onChange={e=>setSlotEnd(Number(e.target.value))}>{HOURS.slice(1).map(h=><option key={h} value={h}>{timeStr(h)}</option>)}</select></div>
                   </div>
-                  <div>
-                    <p style={{fontSize:11,color:"#64748b",marginBottom:6}}>End Time</p>
-                    <select className="input-field" value={slotEnd} onChange={e=>setSlotEnd(Number(e.target.value))}>
-                      {HOURS.slice(1).map(h=><option key={h} value={h}>{timeStr(h)}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <input className="input-field" placeholder="Venue (e.g. LT3, Lab 2)" value={slotVenue} onChange={e=>setSlotVenue(e.target.value)} />
-                <div style={{display:"flex",gap:10,marginTop:4}}>
-                  <button className="btn-ghost" style={{flex:1}} onClick={()=>setShowSlotForm(false)}>Cancel</button>
-                  <button className="btn-primary" style={{flex:2}} onClick={addSlot} disabled={loading}>{loading?"Saving...":"Add Session"}</button>
-                </div>
-              </div>
-            )}
+                  <div className="form-group"><label className="form-label">Venue</label><input className="form-control" placeholder="e.g. LT3, Lab 2, Block C" value={slotVenue} onChange={e=>setSlotVenue(e.target.value)} /></div>
+                </>
+              )}
+            </div>
+            <div className="modal-footer"><button className="btn-outline" onClick={()=>setShowSlotForm(false)}>Cancel</button><button className="btn-green" onClick={addSlot} disabled={loading||units.length===0}>{loading?"Saving...":"Add Session"}</button></div>
           </div>
         </div>
       )}
@@ -466,56 +691,100 @@ function Timetable({ user }) {
   );
 }
 
+// ── Main App ───────────────────────────────────────────────────────────────────
 function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [tab, setTab] = useState("announcements");
+  const [page, setPage] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [announcements, setAnnouncements] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [slots, setSlots] = useState([]);
+
+  useEffect(() => { return auth.onAuthStateChanged(u=>{ setUser(u); setAuthLoading(false); }); }, []);
 
   useEffect(() => {
-    return auth.onAuthStateChanged(u=>{ setUser(u); setAuthLoading(false); });
-  }, []);
+    if (!user) return;
+    const u1 = db.collection("announcements").orderBy("createdAt","desc").onSnapshot(snap=>setAnnouncements(snap.docs.map(d=>({id:d.id,...d.data()}))));
+    const u2 = db.collection("units").onSnapshot(snap=>setUnits(snap.docs.map(d=>({id:d.id,...d.data()}))));
+    const u3 = db.collection("slots").onSnapshot(snap=>setSlots(snap.docs.map(d=>({id:d.id,...d.data()}))));
+    return ()=>{ u1(); u2(); u3(); };
+  }, [user]);
 
   if (authLoading) return (
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0a0a0f"}}>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f0f2f5"}}>
       <div style={{textAlign:"center"}}>
-        <div style={{width:40,height:40,border:"3px solid #2a2a3a",borderTopColor:"#6ee7b7",borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto 16px"}}/>
-        <p style={{color:"#64748b",fontSize:14}}>Loading Nexus...</p>
+        <div style={{width:40,height:40,border:"3px solid #e0e0e0",borderTopColor:"#1a6b3c",borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto 14px"}}/>
+        <div style={{color:"#1a6b3c",fontWeight:600,fontSize:14}}>Loading Nexus...</div>
+        <div style={{color:"#aaa",fontSize:12,marginTop:4}}>BSCS Year 2 · TUM</div>
       </div>
     </div>
   );
 
   if (!user) return <AuthScreen />;
 
+  const navItems = [
+    {id:"dashboard",icon:"📊",label:"Dashboard"},
+    {id:"announcements",icon:"📢",label:"Announcements"},
+    {id:"timetable",icon:"📅",label:"Timetable"},
+    {id:"today",icon:"📆",label:"Today's Classes"},
+    {id:"units",icon:"📚",label:"My Units"},
+  ];
+
+  const pageTitle = navItems.find(n=>n.id===page)?.label || "Dashboard";
+
   return (
-    <div style={{minHeight:"100vh",background:"radial-gradient(ellipse at 80% 10%, rgba(110,231,183,0.04) 0%, transparent 50%), #0a0a0f"}}>
-      <nav style={{background:"#12121a",borderBottom:"1px solid #2a2a3a",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:50}}>
-        <div style={{display:"flex",alignItems:"center",gap:16}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:32,height:32,background:"#6ee7b7",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{fontFamily:"Syne",fontWeight:800,fontSize:16,color:"#0a0a0f"}}>N</span>
+    <div className="app-layout">
+      {/* Sidebar */}
+      <div className={`sidebar ${sidebarOpen?"open":""}`}>
+        <div className="sidebar-logo">
+          <div className="sidebar-logo-icon">N</div>
+          <div>
+            <div className="sidebar-logo-text">NEXUS</div>
+            <div className="sidebar-logo-sub">BSCS Year 2 · TUM</div>
+          </div>
+        </div>
+        <div className="sidebar-nav">
+          <div className="nav-section-label">Main Menu</div>
+          {navItems.map(n=>(
+            <div key={n.id} className={`nav-item ${page===n.id?"active":""}`} onClick={()=>{ setPage(n.id); setSidebarOpen(false); }}>
+              <span className="nav-item-icon">{n.icon}</span>
+              {n.label}
             </div>
-            <span className="nexus-title" style={{fontSize:18}}>Nexus</span>
-          </div>
-          <div style={{display:"flex",gap:2}}>
-            {[{id:"announcements",label:"Announcements",icon:"📢"},{id:"timetable",label:"Timetable",icon:"📅"}].map(t=>(
-              <button key={t.id} className={`nav-btn ${tab===t.id?"active":""}`} onClick={()=>setTab(t.id)}>
-                <span>{t.icon}</span><span style={{display:"none"}} className="label">{t.label}</span>
-              </button>
-            ))}
+          ))}
+        </div>
+        <div className="sidebar-footer">
+          <div className="sidebar-user">
+            <div className="sidebar-avatar">{getInitials(user.displayName||user.email)}</div>
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-name">{user.displayName||"Student"}</div>
+              <div className="sidebar-user-role">BSCS Year 2</div>
+            </div>
+            <button className="signout-btn" onClick={()=>auth.signOut()} title="Sign Out">⏻</button>
           </div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{textAlign:"right"}}>
-            <p style={{fontSize:13,fontWeight:600}}>{user.displayName||"Student"}</p>
-            <p style={{fontSize:11,color:"#64748b"}}>BSCS Year 2</p>
-          </div>
-          <button onClick={()=>auth.signOut()} className="btn-ghost" style={{fontSize:12,padding:"6px 14px"}}>Sign Out</button>
+      </div>
+
+      {/* Topbar */}
+      <div className="topbar">
+        <div className="topbar-title">
+          ☰ &nbsp;{pageTitle.toUpperCase()}
+          <span className="topbar-breadcrumb">| STUDENT PORTAL</span>
         </div>
-      </nav>
-      <main style={{maxWidth:900,margin:"0 auto",padding:"32px 20px"}}>
-        {tab==="announcements" && <Announcements user={user} />}
-        {tab==="timetable" && <Timetable user={user} />}
-      </main>
+        <div className="topbar-right">
+          <div className="topbar-user">
+            <div className="topbar-avatar">{getInitials(user.displayName||user.email)}</div>
+            {(user.displayName||"Student").toUpperCase()}
+          </div>
+        </div>
+      </div>
+
+      {/* Main */}
+      <div className="main-content">
+        {page==="dashboard" && <Dashboard user={user} setPage={setPage} announcements={announcements} units={units} slots={slots} />}
+        {page==="announcements" && <Announcements user={user} posts={announcements} />}
+        {(page==="timetable"||page==="today"||page==="units") && <Timetable user={user} units={units} setUnits={setUnits} slots={slots} setSlots={setSlots} />}
+      </div>
     </div>
   );
 }
